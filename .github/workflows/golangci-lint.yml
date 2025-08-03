@@ -1,0 +1,39 @@
+name: golangci-lint
+
+on:
+  push:
+    branches:
+      - main
+      - renovate/**
+    tags:
+      - v*
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set Github ENV variables
+        shell: bash
+        run: |
+          echo "GO_VERSION=$(cat go.mod | sed -En 's/go ([0-9.]+)/\1/p' | tr -d '[:blank:]')" >> $GITHUB_ENV
+          echo "GOLANGCI_LINT_VERSION=$(cat mise.toml | sed -En 's/golangci-lint.+"(.*)"/\1/p')" >> $GITHUB_ENV
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v${{ env.GOLANGCI_LINT_VERSION }}
