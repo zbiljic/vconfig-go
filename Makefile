@@ -50,18 +50,17 @@ tools:
 bootstrap: tools # Install all dependencies
 	@mise install
 
-GO_VERSION   := $(shell go mod edit -json | sed -En 's/"Go": "([^"]*).*/\1/p' | tr -d '[:blank:]')
-GO_WORK_DIRS := $(shell find . -name go.mod -exec dirname {} \; | sort | uniq)
+GO_VERSION := $(shell go mod edit -json | sed -En 's/"Go": "([^"]*).*/\1/p' | tr -d '[:blank:]')
 
 GO_MOD_TIDY_CMD   := go mod tidy -compat=$(GO_VERSION)
 GO_MOD_TIDY_E_CMD := go mod tidy -e -compat=$(GO_VERSION)
 
-.PHONY: go-mod-tidy-$(GO_WORK_DIRS)
-go-mod-tidy-$(GO_WORK_DIRS):
-	@cd $(PROJECT_ROOT)/$(@:go-mod-tidy-%=%) && $(GO_MOD_TIDY_E_CMD) && $(GO_MOD_TIDY_CMD)
+.PHONY: go-mod-tidy
+go-mod-tidy:
+	@cd $(PROJECT_ROOT) && $(GO_MOD_TIDY_E_CMD) && $(GO_MOD_TIDY_CMD)
 
 .PHONY: tidy
-tidy: go-mod-tidy-$(GO_WORK_DIRS)
+tidy: go-mod-tidy
 
 .PHONY: gofmt
 gofmt: tools
@@ -113,7 +112,7 @@ coverage-total: ## Print total coverage percentage
 	@go tool cover -func $< | grep total | awk '{ printf "total coverage: %s of statements\n", $$3 }'
 
 .PHONY: pre-commit
-pre-commit: gofmt lint check-mod
+pre-commit: gofmt lint check-mod test
 
 .PHONY: clean
 clean: ## Remove build artifacts
